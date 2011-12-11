@@ -10,7 +10,7 @@ Use the average of different timeslot prices weighted by the predicted probabili
 	ad expenditure as the tv ad price instrument
 
 author: Kunhee Kim (kunhee.kim@stanford.edu)
-last updated: 4Dec2011
+last updated: 9Dec2011
 
 input datasets:
 	2000.txt - 2009.txt
@@ -200,7 +200,7 @@ cd "/Users/kunheekim/Documents/Kessler/dtca/IVdata/stata_data/tv"
 use tv_cpm, clear
 *merge m:1 dmacode year using "/Users/kunheekim/Documents/Kessler/dtca/IVdata/stata_data/ad_bydrg/ad_bydrg_dma_coll_wide", keep(3) nogen
 merge m:1 dmacode year using "/Users/kunheekim/Documents/kessler/dtca/int_data/dtca/ad_bydrg_coll_wide", keep(3) nogen
-local drg "arthritis chol heart mental abilify caduet"
+local drg "arthritis chol heart mental tot"
 foreach d of local drg {
 	replace tvexp`d' = tvexp`d'*1000
 	replace newsexp`d' = newsexp`d'*1000
