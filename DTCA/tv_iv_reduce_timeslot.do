@@ -6,7 +6,7 @@ reduce_timeslot.do
 reduce # categories by reassigning DMAs in the sparsely-populated time slots to their next-closest time slot, 
 	to preapre for the MN logits
 
-last updated: 4Dec2011
+last updated: 9Dec2011
 author: Kunhee Kim (kunhee.kim@stanford.edu)
 
 input datasets: 
@@ -34,7 +34,7 @@ drop ltv* l2tv* sltv* sl2tv*
 *calculate absolute difference between avg expenditure on a TV ad and each list price of ad
 local times "earlymorn daytime earlyfringe earlynews primeaccess primetime latenews latefringe" 
 *cost_earlymorn - cost_latefringe 
-local drg "arthritis chol heart mental abilify caduet"
+local drg "arthritis chol heart mental tot"
 foreach d of local drg {	
 	foreach t of local times {
 		gen diff_`t'_`d' = abs(avg_tvad_exp_`d' - cost_`t')
@@ -57,10 +57,15 @@ saveold tv_cpm_exp, replace */
 use tv_cpm_exp, clear
 gen i = 1
 
-*rule: dma-year's w/ zero #tv ads have closest timeslot assigned to the time with min cost
+/*check in what years #tv ads are non-zero & non-missing in DMAs
+local drg "arthritis chol heart mental tot"
+foreach d of local drg {
+	di "`d'"
+	tab year if tvq`d' !=. & tvq`d'!=0
+}*/
 
 ** Arthritis, Cholesterol, Mental Illness Groups **
-local drg "arthritis chol mental"
+local drg "arthritis chol mental tot"
 foreach d of local drg {
 	gen closest_timeslot_`d'2 = "."	
 	foreach yr of numlist 2000/2009 {	
@@ -127,7 +132,7 @@ foreach d of local drg {
 local drg "heart"
 foreach d of local drg {
 	gen closest_timeslot_`d'2 = "."	
-	foreach yr of numlist 2002/2002 2004/2009 {	
+	foreach yr of numlist 2002/2002 2004/2008 {	
 		di "`yr' `d' loop"
 		capture drop min_`d'_freq  
 		capture drop `d'_freq 
@@ -186,7 +191,7 @@ foreach d of local drg {
 	}
 }
 
-** Caduet Group **
+/** Caduet Group **
 local drg "caduet"
 foreach d of local drg {
 	gen closest_timeslot_`d'2 = "."	
@@ -311,17 +316,26 @@ foreach d of local drg {
 			di "while loop ends"
 		}
 	}
+} */
+
+*adjust the closest timeslot of DMA-CPM to make it equal to that of DMA-CPP 
+sort dmacode year cpp_cpm
+local drg "arthritis chol heart mental tot"
+foreach d of local drg {
+	bysort dmacode year: replace closest_timeslot_`d' = closest_timeslot_`d'[_n+1] if cpp_cpm=="DMA-CPM"
 }
 
 *check if every disease group has 5 timeslot categories
-local drg "arthritis chol heart mental caduet abilify"
+local drg "arthritis chol heart mental tot"
 foreach d of local drg {
 	forval yr=2000/2009 {
 		di "`yr'"
-		tab closest_timeslot_`d' if cpp_cpm=="DMA-CPP" & year==`yr' & tvq`d'!=. 
-		*& avg_tvad_exp_`d'!=0 
+		tab closest_timeslot_`d' if cpp_cpm=="DMA-CPP" & year==`yr' & tvq`d'!=. & tvq`d'!=0
 	}
 }
+
+*clean up difference variables
+drop *_arthritis2 *_chol2 *_heart2 *_mental2 *_freq tag n_category i
 
 save tv_cpm_exp_trans, replace 
 
